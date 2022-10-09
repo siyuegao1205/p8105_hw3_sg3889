@@ -7,7 +7,7 @@ output: github_document
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(collapse = TRUE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
 ```
 
 ```{r}
@@ -46,4 +46,94 @@ instacart %>%
   filter(order_id == 1)
 ```
 
-In the "train" evaluation set, the user 112108 ordered 8 products from dairy eggs, produce, and canned goods department in this order, including Bulgarian Yogurt, Organic 4% Milk Fat Whole Milk Cottage Cheese, Organic Celery Hearts, Cucumber Kirby, Lightly Smoked Sardines in Olive Oil, Bag of Organic Bananas, Organic Hass Avocado, and Organic Whole String Cheese. The user 112108 placed this order on Thursday, 10 am, and this order is the 4th one for this user. The prior order of the user 112108 was placed 9 days ago.
+In the "train" evaluation set, the user 112108 ordered 8 products from dairy eggs, produce, and canned goods department in this order, including Bulgarian Yogurt, Organic 4% Milk Fat Whole Milk Cottage Cheese, Organic Celery Hearts, Cucumber Kirby, Lightly Smoked Sardines in Olive Oil, Bag of Organic Bananas, Organic Hass Avocado, and Organic Whole String Cheese. The user 112108 placed this order on Wednesday, 10 am, and this order is the 4th one for this user. The prior order of the user 112108 was placed 9 days ago.
+
+
+## Some Questions Related to `instacart`
+
+*   How many aisles are there, and which aisles are the most items ordered from?
+
+```{r}
+instacart %>% 
+  group_by(aisle) %>% 
+  summarise(
+    order_count = n()
+  ) %>% 
+  arrange(desc(order_count)) %>% 
+  head(2)
+```
+
+There are `r n_distinct(instacart$aisle)` unique aisles, and the most items are ordered from aisle "fresh vegetables", followed by aisle "fresh fruits".
+
+*   Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
+
+```{r, fig.height = 6, out.width = "90%"}
+instacart %>% 
+  group_by(aisle) %>% 
+  summarise(
+    order_count = n()
+  ) %>% 
+  filter(order_count > 10000) %>% 
+  ggplot(aes(x = reorder(aisle, desc(order_count)), y = order_count)) +
+  geom_col() +
+  labs(
+      x = "Aisle",
+      y = "Number of Items Ordered\nin Each Aisle",
+      title = "Figure 1: Frequency of Items Ordered in Each Aisle",
+      caption = "Data are limited to aisles with more than 10,000 items ordered."
+    ) +
+  theme_bw() +
+  theme(
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(angle = 90),
+    plot.title = element_text(hjust = 0.5)
+    )
+```
+
+The plot above shows the number of items ordered in each aisle, with data limited to aisles with more than 10000 items ordered. We can tell that the most items are ordered from aisle "fresh vegetables", followed by aisle "fresh fruits".
+
+*   Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
+
+```{r}
+instacart %>% 
+  filter(
+    aisle %in% c("baking ingredients", "dog food care", "packaged vegetables fruits")
+    ) %>% 
+  group_by(product_name) %>% 
+  mutate(
+    times = n()
+  ) %>% 
+  relocate(aisle) %>% 
+  arrange(aisle, desc(times)) %>% 
+  distinct(aisle, product_name, times) %>%
+  group_by(aisle) %>% 
+  top_n(n = 3)
+```
+
+The table above shows the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”.
+
+Of the aisle "baking ingredients", the most popular item is Light Brown Sugar, followed by Pure Baking Soda and Cane Sugar. Of the aisle "dog food care", the most popular item is Snack Sticks Chicken & Rice Recipe Dog Treats, followed by Organix Chicken & Brown Rice Recipe and Small Dog Biscuits. Of the aisle "packaged vegetables fruits", the most popular item is Organic Baby Spinach, followed by Organic Raspberries and Organic Blueberries. 
+
+*   Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table).
+
+```{r}
+instacart %>% 
+  filter(
+    product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")
+    ) %>% 
+  group_by(product_name, order_dow) %>% 
+  summarise(
+    mean_hour = mean(order_hour_of_day, na.rm = TRUE)
+  ) %>% 
+  mutate(
+    order_dow = ifelse(order_dow == 0, order_dow + 7, order_dow),
+    order_dow = lubridate::wday(order_dow, label = TRUE)
+  ) %>%
+  pivot_wider(
+    names_from = "order_dow",
+    values_from = "mean_hour"
+  )
+```
+
+The table above shows the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week. To give an illustrative example, the mean hour of Pink Lady Apples being ordered on Saturday is 13.4.
