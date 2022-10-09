@@ -14,3 +14,36 @@ knitr::opts_chunk$set(collapse = TRUE, message = FALSE, warning = FALSE)
 library(tidyverse)
 library(p8105.datasets)
 ```
+
+
+# Problem 1
+
+## Load the data
+
+```{r}
+data("instacart")
+```
+
+## Data Description
+
+The `instacart` dataset contains `r nrow(instacart)` observations of `r n_distinct(instacart$user_id)` unique users from the "train" evaluation set, with `r ncol(instacart)` variables, primarily describing information about Instacart online order usage. Some key variables in the dataset are as follows:
+
+*   `user_id`: user identifier
+*   `product_id` and `product_name`: product identifier and name of the product, respectively
+*   `aisle_id` and `aisle`: aisle identifier and name of the aisle, respectively
+*   `department_id` and `department`: department identifier and name of the department, respectively
+*   some variables related to the `order`, such as:
+    *   `order_id`: order identifier
+    *   `add_to_cart_order`: sequence of each product being added into cart in each order
+    *   `order_number`: order sequence for each unique user
+    *   `order_dow` and `order_hour_of_day`: time that the order was placed on
+    *   `days_since_prior_order`: days since the last order
+
+To give an illustrative example of the order NO.1 in this dataset:
+
+```{r}
+instacart %>% 
+  filter(order_id == 1)
+```
+
+In the "train" evaluation set, the user 112108 ordered 8 products from dairy eggs, produce, and canned goods department in this order, including Bulgarian Yogurt, Organic 4% Milk Fat Whole Milk Cottage Cheese, Organic Celery Hearts, Cucumber Kirby, Lightly Smoked Sardines in Olive Oil, Bag of Organic Bananas, Organic Hass Avocado, and Organic Whole String Cheese. The user 112108 placed this order on Thursday, 10 am, and this order is the 4th one for this user. The prior order of the user 112108 was placed 9 days ago.
