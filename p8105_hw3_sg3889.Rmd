@@ -128,7 +128,7 @@ instacart %>%
   ) %>% 
   mutate(
     order_dow = ifelse(order_dow == 0, order_dow + 7, order_dow),
-    order_dow = lubridate::wday(order_dow, label = TRUE)
+    order_dow = lubridate::wday(order_dow, label = TRUE, abbr = FALSE)
   ) %>%
   pivot_wider(
     names_from = "order_dow",
@@ -137,3 +137,30 @@ instacart %>%
 ```
 
 The table above shows the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week. To give an illustrative example, the mean hour of Pink Lady Apples being ordered on Saturday is 13.4.
+
+
+# Problem 2
+
+## Load, tidy, and wrangle the data
+
+The following code chunk is to tidy the data by `pivot_longer()`, create a new variable called `weekday_vs_weekend` to indicate whether the day is weekday or weekend, and finally encode some variables (`day` and `minute`) into more reasonable classes. The resulting tidied dataset is arranged by `week` and `day`.
+
+```{r}
+accelerometer = read_csv("data/accel_data.csv") %>% 
+  janitor::clean_names() %>% 
+  pivot_longer(
+    activity_1:activity_1440,
+    names_to = "minute",
+    values_to = "activity_counts",
+    names_prefix = "activity_"
+  ) %>% 
+  mutate(
+    day = factor(day, levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")),
+    weekday_vs_weekend = ifelse(day %in%  c("Saturday", "Sunday"), "weekend", "weekday"),
+    minute = as.numeric(minute)
+  ) %>% 
+  arrange(week, day)
+```
+
+The resulting dataset includes `r nrow(accelerometer)` observations with `r ncol(accelerometer)` variables, primarily recording some activity information of a 63 year-old male with BMI 25, collected by the accelerometer. Some key variables are `activity_counts`, indicating the activity counts for each minute; `week`, `day`, `minute`, showing the time of which the data point is collected; and `weekday_vs_weekend` is a binary indicator of either weekday or weekend.
+
