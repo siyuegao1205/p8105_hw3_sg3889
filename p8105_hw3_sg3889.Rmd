@@ -164,3 +164,41 @@ accelerometer = read_csv("data/accel_data.csv") %>%
 
 The resulting dataset includes `r nrow(accelerometer)` observations with `r ncol(accelerometer)` variables, primarily recording some activity information of a 63 year-old male with BMI 25, collected by the accelerometer. Some key variables are `activity_counts`, indicating the activity counts for each minute; `week`, `day`, `minute`, showing the time of which the data point is collected; and `weekday_vs_weekend` is a binary indicator of either weekday or weekend.
 
+## Traditional analyses of `accelerometer`
+
+The following code chunk creates a new variable `total_counts` by aggregating across minutes to identify the total activity for each day. The table below shows the total activities by `week` and `day`.
+
+```{r}
+accelerometer = accelerometer %>% 
+  group_by(day_id) %>% 
+  mutate(
+    total_counts = sum(activity_counts, na.rm = TRUE)
+  )
+
+accelerometer %>% 
+  distinct(week, day, total_counts) %>% 
+  print.data.frame()
+```
+
+To examine any apparent trends of total activity, we'd like to make a scatterplot with a trend line added.
+
+```{r, fig.height = 6, out.width = "90%"}
+accelerometer %>% 
+  ggplot(aes(x = day_id, y = total_counts, color = weekday_vs_weekend)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  labs(
+    x = "Day ID",
+    y = "Total Activity Counts",
+    title = "Figure 2: Total Activity Counts by Day ID",
+    caption = "Day ID is the originally assigned ID by the accelerometer."    
+  ) +
+  theme_bw() +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_blank()
+  )
+```
+
+As the above figure shows, the total activity counts on weekdays seem to be more stable, while there are more fluctuations (larger variances) on weekends. However, we should note that there are several days with total activity counts as low as 1440 (with every minute only counting "1"), indicating that the accelerometer might fail to accurately record the data.
+
