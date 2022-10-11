@@ -6,13 +6,27 @@ output: github_document
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE,
+  fig.height = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
 ```
 
 ```{r}
 library(tidyverse)
 library(p8105.datasets)
+
+options(
+  ggplot2.continuous.colour = "viridis",
+  ggplot2.continuous.fill = "viridis"
+)
+
+scale_colour_discrete = scale_colour_viridis_d
+scale_fill_discrete = scale_fill_viridis_d
 ```
 
 
@@ -67,27 +81,29 @@ There are `r n_distinct(instacart$aisle)` unique aisles, and the most items are 
 
 *   Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
 
-```{r, fig.height = 6, out.width = "90%"}
+```{r}
 instacart %>% 
   group_by(aisle) %>% 
   summarise(
     order_count = n()
   ) %>% 
   filter(order_count > 10000) %>% 
-  ggplot(aes(x = reorder(aisle, desc(order_count)), y = order_count)) +
+  mutate(
+    aisle = fct_reorder(aisle, order_count)
+  ) %>% 
+  ggplot(aes(x = aisle, y = order_count)) +
   geom_col() +
   labs(
       x = "Aisle",
-      y = "Number of Items Ordered\nin Each Aisle",
-      title = "Figure 1: Frequency of Items Ordered in Each Aisle",
+      y = "Number of Items Ordered in Each Aisle",
+      title = "Frequency of Items Ordered in Each Aisle",
       caption = "Data are limited to aisles with more than 10,000 items ordered."
     ) +
+  coord_flip() +
   theme_bw() +
   theme(
     panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    axis.text.x = element_text(angle = 90),
-    plot.title = element_text(hjust = 0.5)
+    panel.grid.minor = element_blank()
     )
 ```
 
@@ -127,16 +143,16 @@ instacart %>%
     mean_hour = mean(order_hour_of_day, na.rm = TRUE)
   ) %>% 
   mutate(
-    order_dow = ifelse(order_dow == 0, order_dow + 7, order_dow),
+    order_dow = order_dow + 1,
     order_dow = lubridate::wday(order_dow, label = TRUE, abbr = FALSE)
   ) %>%
   pivot_wider(
-    names_from = "order_dow",
-    values_from = "mean_hour"
+    names_from = order_dow,
+    values_from = mean_hour
   )
 ```
 
-The table above shows the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week. To give an illustrative example, the mean hour of Pink Lady Apples being ordered on Saturday is 13.4.
+The table above shows the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week. To give an illustrative example, the mean hour of Pink Lady Apples being ordered on Sunday is 13.4.
 
 
 # Problem 2
@@ -155,7 +171,9 @@ accelerometer = read_csv("data/accel_data.csv") %>%
     names_prefix = "activity_"
   ) %>% 
   mutate(
-    day = factor(day, levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")),
+    day = factor(day, 
+                 levels = c("Sunday", "Monday", "Tuesday", "Wednesday",
+                            "Thursday", "Friday", "Saturday")),
     weekday_vs_weekend = ifelse(day %in%  c("Saturday", "Sunday"), "weekend", "weekday"),
     minute = as.numeric(minute)
   ) %>% 
@@ -182,7 +200,7 @@ accelerometer %>%
 
 To examine any apparent trends of total activity, we'd like to make a scatterplot with a trend line added.
 
-```{r, fig.height = 6, out.width = "90%"}
+```{r}
 accelerometer %>% 
   ggplot(aes(x = day_id, y = total_counts, color = weekday_vs_weekend)) +
   geom_point() +
@@ -190,10 +208,10 @@ accelerometer %>%
   labs(
     x = "Day ID",
     y = "Total Activity Counts",
-    title = "Figure 2: Total Activity Counts by Day ID",
+    title = "Total Activity Counts by Day ID",
     caption = "Day ID is the originally assigned ID by the accelerometer."    
   ) +
-  theme_bw() +
+  theme_minimal() +
   theme(
     legend.position = "bottom",
     legend.title = element_blank()
@@ -201,4 +219,26 @@ accelerometer %>%
 ```
 
 As the above figure shows, the total activity counts on weekdays seem to be more stable, while there are more fluctuations (larger variances) on weekends. However, we should note that there are several days with total activity counts as low as 1440 (with every minute only counting "1"), indicating that the accelerometer might fail to accurately record the data.
+
+## Inspection activity over the course of the day
+
+The following code chunk makes a single-panel plot showing the 24-hour activity time courses for each day.
+
+```{r}
+accelerometer %>%
+  mutate(
+    hour = minute / 60
+  ) %>% 
+  ggplot(aes(x = hour, y = activity_counts, color = day)) +
+  geom_smooth(se = FALSE) +
+  labs(
+    x = "Hour of Day",
+    y = "Activity Counts",
+    title = "24-hour Activity Counts for Each Day",
+    color = "Day of Week"
+  ) +
+  theme_minimal()
+```
+
+The plot above shows the 24-hour activity counts by hour for each day, and the different colors are used to indicate day of the week. We can tell that at around Sunday noon and on Friday late evening, the activity counts of this participant reach to two peaks, compared to other time courses. The activity counts tend to experience a decline after about 10 pm each day, and there are always periods with lower activity counts from 0 to 5 am.
 
