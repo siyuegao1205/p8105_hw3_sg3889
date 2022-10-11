@@ -19,14 +19,6 @@ knitr::opts_chunk$set(
 ```{r}
 library(tidyverse)
 library(p8105.datasets)
-
-options(
-  ggplot2.continuous.colour = "viridis",
-  ggplot2.continuous.fill = "viridis"
-)
-
-scale_colour_discrete = scale_colour_viridis_d
-scale_fill_discrete = scale_fill_viridis_d
 ```
 
 
@@ -38,7 +30,7 @@ scale_fill_discrete = scale_fill_viridis_d
 data("instacart")
 ```
 
-## Data Description
+## Data description
 
 The `instacart` dataset contains `r nrow(instacart)` observations of `r n_distinct(instacart$user_id)` unique users from the "train" evaluation set, with `r ncol(instacart)` variables, primarily describing information about Instacart online order usage. Some key variables in the dataset are as follows:
 
@@ -237,8 +229,90 @@ accelerometer %>%
     title = "24-hour Activity Counts for Each Day",
     color = "Day of Week"
   ) +
+  scale_x_continuous(
+    breaks = c(0, 3, 6, 9, 12, 15, 18, 21, 24)
+  ) +
   theme_minimal()
 ```
 
-The plot above shows the 24-hour activity counts by hour for each day, and the different colors are used to indicate day of the week. We can tell that at around Sunday noon and on Friday late evening, the activity counts of this participant reach to two peaks, compared to other time courses. The activity counts tend to experience a decline after about 10 pm each day, and there are always periods with lower activity counts from 0 to 5 am.
+The plot above shows the 24-hour activity counts by hour for each day, and the different colors are used to indicate day of the week. We can tell that at around Sunday noon and on Friday late evening, the activity counts of this participant reach to two peaks, compared to other time courses. The activity counts tend to experience an obvious decline after about 10 pm each day, and there are always periods with lower activity counts from 0 to 5 am.
+
+
+# Problem 3
+
+## Load and clean the data
+
+Load the data, separate `date` into `year`, `month`, and `day`. Change the units of temperature, precipitation, and snowfall into more reasonable and readable ones.
+
+```{r}
+data("ny_noaa")
+
+ny_noaa = ny_noaa %>%
+  separate(date, into = c("year", "month", "day"), sep = "-") %>% 
+  mutate(
+    year = as.numeric(year),
+    month = as.numeric(month),
+    day = as.numeric(day),
+    prcp = ifelse(!is.na(prcp), prcp / 10, NA_real_),
+    tmax = ifelse(!is.na(tmax), as.numeric(tmax) / 10, NA_real_),
+    tmin = ifelse(!is.na(tmin), as.numeric(tmin) / 10, NA_real_)
+  )
+```
+
+## Data description
+
+```{r, eval = FALSE}
+skimr::skim(ny_noaa)
+```
+
+The `ny_noaa` dataset contains `r nrow(ny_noaa)` observations of `r n_distinct(ny_noaa$id)` unique weather station in New York State, with `r ncol(ny_noaa)` variables, primarily describing climate information collected at given specific observation dates from `r min(ny_noaa$year)` to `r max(ny_noaa$year)`. Some key variables are recorded in the dataset, such as precipitation (mm), snowfall (mm), snow depth (mm), maximum and minimum temperature (degrees C). There are `r sum(is.na(ny_noaa$prcp))` NAs for precipitation, `r sum(is.na(ny_noaa$snow))` NAs for snowfall, `r sum(is.na(ny_noaa$snwd))` NAs for snow depth, `r sum(is.na(ny_noaa$tmax))` NAs for maximum temperature, and `r sum(is.na(ny_noaa$tmin))` NAs for minimum temperature. These missing values are due to the fact that each weather station may collect only a subset of these variables.
+
+```{r}
+ny_noaa %>% 
+  group_by(snow) %>% 
+  summarise(
+    n_obs = n()
+  ) %>% 
+  mutate(
+    rank = min_rank(desc(n_obs))
+  ) %>% 
+  arrange(rank)
+```
+
+For snowfall, the most commonly observed value is 0. It's reasonable since the snow usually occurs during winter months, which only take up 1/4 time of a whole year.
+
+## Two-panel plot for average `tmax`
+
+```{r}
+ny_noaa %>% 
+  filter(month %in% c(1, 7)) %>% 
+  mutate(
+    month = month.name[month]
+  ) %>% 
+  group_by(id, year, month) %>% 
+  summarise(
+    mean_tmax = mean(tmax, na.rm = TRUE)
+  ) %>% 
+  ggplot(aes(x = year, y = mean_tmax)) +
+  geom_point(alpha = .5) +
+  geom_smooth(color = "red", se = FALSE) +
+  labs(
+    x = "Year",
+    y = "Average Maximum Temperature\n(degrees C)",
+    title = "Average Maximum Temperature in Each Weather Station across Years",
+    caption = "Data are limited to January and July.\nEach spot represent a unique weather station."
+  ) +
+  scale_x_continuous(
+    breaks = c(1980, 1985, 1990, 1995, 2000, 2005, 2010)
+  ) +
+  facet_grid(. ~ month) +
+  theme_minimal() +
+  theme(
+    panel.spacing = unit(1, "lines")
+  )
+```
+
+For average maximum temperature in **January**, there is a continuous increase from 1981 to 1990. However, after 1990, it tends to have a regular fluctuation at around 0 Celcius degree, with a decrease lasting for 3 to 4 years followed by a continuous increase for approximately 4 to 5 years. There are some obvious outliers just by eyeballing, for instance, in 1982 and 2005, we can observe some stations with extremely lower mean maximum temperature (and also some in 2008 and 2010), while in 2004, there are some higher observations.
+
+For average maximum temperature in **July**, the overall trend is more stable. The average maximum temperature is at around 27 celcius degrees across years. There are some obvious outliers, for instance, in 1989, we can observe a weather station with an extremely lower average maximum temperature, and also some lower observations in years such as 1981 to 1984, 2005, and 2007.
 
