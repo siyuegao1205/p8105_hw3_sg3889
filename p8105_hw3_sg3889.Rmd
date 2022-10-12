@@ -370,7 +370,13 @@ snowfall_density_ridges = ny_noaa %>%
   )
 ```
 
-Finally, use `patchwork` to align these two plots side by side. Save it by `ggsave()` and attach it in the final rendered github_document.
+Finally, use `patchwork` to align these two plots side by side.
+
+```{r, fig.show = "hide"}
+tmax_vs_tmin + snowfall_density_ridges
+```
+
+The above code chunk gets a two-panel plot overlapping with each other. Use `ggsave` to save a better one and attach it to the finalized rendered github_document.
 
 ```{r}
 final_plot = tmax_vs_tmin + snowfall_density_ridges
