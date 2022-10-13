@@ -115,7 +115,8 @@ instacart %>%
   arrange(aisle, desc(times)) %>% 
   distinct(aisle, product_name, times) %>%
   group_by(aisle) %>% 
-  top_n(n = 3)
+  top_n(n = 3) %>% 
+  knitr::kable()
 ```
 
 The table above shows the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”.
@@ -140,10 +141,11 @@ instacart %>%
   pivot_wider(
     names_from = order_dow,
     values_from = mean_hour
-  )
+  ) %>% 
+  knitr::kable(digits = 2)
 ```
 
-The table above shows the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week. To give an illustrative example, the mean hour of Pink Lady Apples being ordered on Sunday is 13.4.
+The table above shows the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week. To give an illustrative example, the mean hour of Pink Lady Apples being ordered on Sunday is 13.44. Pink Lady Apples are generally purchased slightly earlier in the day than Coffee Ice Cream, with the exception of Thursday and Friday.
 
 
 # Problem 2
@@ -186,7 +188,7 @@ accelerometer = accelerometer %>%
 
 accelerometer %>% 
   distinct(week, day, total_counts) %>% 
-  print.data.frame()
+  knitr::kable()
 ```
 
 To examine any apparent trends of total activity, we'd like to make a scatterplot with a trend line added.
